@@ -3,7 +3,7 @@
         <div id="vditor"></div>
         <div v-if="loading" class="loading-overlay">
             <div class="loading-spinner"></div>
-            <p>请稍等几分钟</p>
+            <p>转换中...请稍等几分钟</p>
         </div>
         <div v-if="errorMessage" class="error-message">
             <p>{{ errorMessage }}</p>
@@ -20,11 +20,17 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.8);
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 1000;
+}
+
+.loading-overlay p{
+    color: white;
+    font-size: 20px;
+    text-align: center;
 }
 
 .error-message p {
@@ -34,19 +40,20 @@
 }
 
 .error-message button {
-    margin-top: 20px;
-    padding: 10px 20px;
-    font-size: 16px;
+    padding: 8px 16px;
+    border-radius: 4px;
     cursor: pointer;
+    border: none;
 }
 
 .loading-spinner {
-    width: 50px;
-    height: 50px;
+    width: 30px;
+    height: 30px;
     border: 5px solid #f3f3f3;
     border-top: 5px solid #3498db;
     border-radius: 50%;
     animation: spin 2s linear infinite;
+    margin: 8px;
 }
 
 @keyframes spin {
