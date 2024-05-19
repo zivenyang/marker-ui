@@ -118,6 +118,22 @@ export default defineComponent({
             }
         }
 
+        function downloadMarkdown() {
+            if (vditor.value) {
+                const markdown = vditor.value.getValue();
+                const blob = new Blob([markdown], { type: 'text/markdown' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                a.href = url;
+                a.download = `markdown-${timestamp}.md`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        }
+
         function handleConversionResponse(data: { markdown: string, images: { [key: string]: string } }) {
             if (vditor.value) {
                 vditor.value.setValue(data.markdown);
@@ -137,8 +153,11 @@ export default defineComponent({
                 vditor.value = new Vditor('vditor', {
                     height: '100vh',
                     width: '100vw',
+                    mode: 'sv',
+                    icon: 'material',
                     toolbar: getToolbarOptions(),
-                    cache: { enable: true }
+                    cache: { enable: true },
+                    counter: { enable: true},
                 });
             }
         });
@@ -148,6 +167,7 @@ export default defineComponent({
                 {
                     name: 'pdf-to-md',
                     tip: 'PDF转markdown',
+                    hotkey: '⇧⌘F',
                     className: 'pdf-markdown-button',
                     icon: '<svg><use xlink:href="#vditor-icon-upload"></use></svg>',
                     click: uploadAndConvertPDF
@@ -155,9 +175,18 @@ export default defineComponent({
                 {
                     name: 'clean-tables',
                     tip: '表格压缩',
+                    hotkey: '⇧⌘D',
                     className: 'clean-tables-button',
                     icon: '<svg><use xlink:href="#vditor-icon-delete-row"></use></svg>',
                     click: cleanMarkdownTables
+                },
+                {
+                    name: 'download-md',
+                    tip: '下载Markdown',
+                    hotkey: '⇧⌘S',
+                    className: 'download-markdown-button',
+                    icon: '<svg><use xlink:href="#vditor-icon-export"></use></svg>',
+                    click: downloadMarkdown
                 },
                 '|',
                 'headings', 'bold', 'italic', 'strike', 'link', 'list', 'ordered-list',
