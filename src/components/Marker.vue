@@ -9,6 +9,16 @@
             <p>{{ errorMessage }}</p>
             <button @click="clearError">关闭</button>
         </div>
+        <div v-if="showDifyConfig" class="dify-config-overlay">
+            <div class="dify-config-form">
+                <label for="difyToken">Token:</label>
+                <input type="text" v-model="difyToken" id="difyToken" />
+                <label for="difyBaseUrl">Base URL:</label>
+                <input type="text" v-model="difyBaseUrl" id="difyBaseUrl" />
+                <button @click="saveDifyConfig">Save</button>
+                <button @click="closeDifyConfig">Cancel</button>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -60,6 +70,51 @@
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+.dify-config-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.dify-config-form {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.dify-config-form label {
+    font-size: 14px;
+}
+
+.dify-config-form input {
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+
+.dify-config-form button {
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: none;
+    background-color: #3498db;
+    color: white;
+}
+
+.dify-config-form button:last-child {
+    background-color: #ccc;
+}
 </style>
 
 <script lang="ts">
@@ -67,6 +122,8 @@ import { defineComponent, ref, onMounted, Ref } from 'vue';
 import axios, { AxiosResponse } from 'axios';
 import Vditor from 'vditor';
 import 'vditor/dist/index.css';
+import difyLogo from '../assets/logo-dify.png';
+
 
 export default defineComponent({
     name: 'MarkdownEditor',
@@ -74,6 +131,10 @@ export default defineComponent({
         const loading = ref(false);
         const vditor: Ref<Vditor | null> = ref(null);
         const errorMessage = ref('');
+        const showDifyConfig = ref(false);
+        const difyToken = ref(localStorage.getItem('difyToken') || '');
+        const difyBaseUrl = ref(localStorage.getItem('difyBaseUrl') || '');
+
 
         function clearError() {
             errorMessage.value = '';
@@ -148,6 +209,40 @@ export default defineComponent({
             });
         }
 
+        function openDifyConfig() {
+            showDifyConfig.value = true;
+        }
+
+        function closeDifyConfig() {
+            showDifyConfig.value = false;
+        }
+
+        function saveDifyConfig() {
+            localStorage.setItem('difyToken', difyToken.value);
+            localStorage.setItem('difyBaseUrl', difyBaseUrl.value);
+            insertDifyChatbotScript();
+            closeDifyConfig();
+        }
+
+        function insertDifyChatbotScript() {
+            if (difyToken.value && difyBaseUrl.value) {
+                const scriptConfig = document.createElement('script');
+                scriptConfig.innerHTML = `
+                    window.difyChatbotConfig = {
+                        token: '${difyToken.value}',
+                        baseUrl: '${difyBaseUrl.value}'
+                    };
+                `;
+                document.head.appendChild(scriptConfig);
+
+                const script = document.createElement('script');
+                script.src = `${difyBaseUrl.value}/embed.min.js`;
+                script.id = difyToken.value;
+                script.defer = true;
+                document.head.appendChild(script);
+            }
+        }
+
         onMounted(() => {
             if (!vditor.value) {
                 vditor.value = new Vditor('vditor', {
@@ -160,6 +255,7 @@ export default defineComponent({
                     counter: { enable: true},
                 });
             }
+            insertDifyChatbotScript();
         });
 
         function getToolbarOptions() {
@@ -188,6 +284,13 @@ export default defineComponent({
                     icon: '<svg><use xlink:href="#vditor-icon-export"></use></svg>',
                     click: downloadMarkdown
                 },
+                {
+                    name: 'dify-config',
+                    tip: '配置Dify',
+                    className: 'dify-config-button',
+                    icon: `<img src="${difyLogo}" alt="Dify Config" style="width: 16px; height: 16px;">`,
+                    click: openDifyConfig
+                },
                 '|',
                 'headings', 'bold', 'italic', 'strike', 'link', 'list', 'ordered-list',
                 'check', 'quote', 'line', 'code', 'inline-code', 'insert-before', 'insert-after',
@@ -204,7 +307,7 @@ export default defineComponent({
         `;
             document.head.appendChild(style);
 
-        return { loading, errorMessage, clearError };
+        return { loading, errorMessage, clearError, showDifyConfig, difyToken, difyBaseUrl, openDifyConfig, closeDifyConfig, saveDifyConfig };
     },
 });
 </script>
