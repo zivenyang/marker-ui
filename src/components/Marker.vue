@@ -107,6 +107,17 @@ export default defineComponent({
             input.click();
         }
 
+        function cleanMarkdownTables() {
+            if (vditor.value) {
+                const markdown = vditor.value.getValue();
+                const cleanedMarkdown = markdown.split('\n').map(line => {
+                    // 清理表格符号周围的空格，并将分隔符缩短
+                    return line.replace(/\s*\|\s*/g, '|').replace(/-+\|-+/g, '-|-');
+                }).join('\n');
+                vditor.value.setValue(cleanedMarkdown);
+            }
+        }
+
         function handleConversionResponse(data: { markdown: string, images: { [key: string]: string } }) {
             if (vditor.value) {
                 vditor.value.setValue(data.markdown);
@@ -140,6 +151,13 @@ export default defineComponent({
                     className: 'pdf-markdown-button',
                     icon: '<svg><use xlink:href="#vditor-icon-upload"></use></svg>',
                     click: uploadAndConvertPDF
+                },
+                {
+                    name: 'clean-tables',
+                    tip: '表格压缩',
+                    className: 'clean-tables-button',
+                    icon: '<svg><use xlink:href="#vditor-icon-delete-row"></use></svg>',
+                    click: cleanMarkdownTables
                 },
                 '|',
                 'headings', 'bold', 'italic', 'strike', 'link', 'list', 'ordered-list',
